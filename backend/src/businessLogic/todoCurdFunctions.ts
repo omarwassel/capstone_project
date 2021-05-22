@@ -17,6 +17,10 @@ export async function getAllTodos(userId: string): Promise<TodoItem[]> {
   return todoAccess.getAllTodosFromDynamodb(userId)
 }
 
+export async function getAllTodosByTag(tag:String,userId: string): Promise<TodoItem[]> {
+  return todoAccess.getAllTodosByTagFromDynamodb(tag,userId)
+}
+
 export async function createTodo(CreateTodoRequest: CreateTodoRequest, userId: string): Promise<TodoItem> {
 
   const itemId = uuid.v4()
@@ -27,20 +31,21 @@ export async function createTodo(CreateTodoRequest: CreateTodoRequest, userId: s
     name: CreateTodoRequest.name,
     dueDate: CreateTodoRequest.dueDate,
     done: false,
+    tag:CreateTodoRequest.tag
   
   })
 }
 
-export async function updateAttachmentUrl(todoId: string) {
-  return await todoAccess.updateAttachmentUrl(todoId)
+export async function updateAttachmentUrl(userId:String,todoId: string) {
+  return await todoAccess.updateAttachmentUrl(userId,todoId)
 }
 
-export async function updateTodo(CreateTodoRequest: UpdateTodoRequest, todoId: string) {
-  return await todoAccess.updateTodoInDynamodb(todoId,CreateTodoRequest)
+export async function updateTodo(CreateTodoRequest: UpdateTodoRequest,userId:String, todoId: string) {
+  return await todoAccess.updateTodoInDynamodb(userId,todoId,CreateTodoRequest)
 }
 
-export async function deleteTodo( todoId: string) {
-  return await todoAccess.deleteTodoFromDynamodb(todoId)
+export async function deleteTodo( userId:String,todoId: string) {
+  return await todoAccess.deleteTodoFromDynamodb(userId,todoId)
     
 }
 

@@ -8,6 +8,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
 
 import{getPresignedUrl} from '../../businessLogic/attachmentUploadFunction'
 import{updateAttachmentUrl} from '../../businessLogic/todoCurdFunctions'
+import { getUserId } from'../utils'
 
 import {createLogger} from '../../utils/logger'
 const loggers= createLogger('generate url todo logger ..')
@@ -24,7 +25,8 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
   // TODO: Return a presigned URL to upload a file for a TODO item with the provided id
   const presignedUrl=getPresignedUrl(todoId)
   loggers.info('presignedUrl:  ',presignedUrl)
-  await updateAttachmentUrl(todoId)
+  const userId=getUserId(event)
+  await updateAttachmentUrl(userId,todoId)
   
   return {
     statusCode:200,

@@ -40,7 +40,8 @@ provider:
 
   environment:
     TODOS_TABLE: Todos-${self:provider.stage}
-    TODOS_BY_USER_INDEX: todosByUserIndex
+    # TODOS_BY_USER_INDEX: todosByUserIndex
+    # TODOS_BY_TAG_INDEX: todosByTagIndex
     TODO_S3_BUCKET: todo-attachments-362575539715-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 3000
     AUTH0_JWKS_URL: https://coffee-shop-proj.us.auth0.com/.well-known/jwks.json
@@ -63,8 +64,22 @@ functions:
       - Effect: Allow
         Action:
           - dynamodb:Query
-        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}/index/${self:provider.environment.TODOS_BY_USER_INDEX}
-      
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+  
+  GetTodosByTag:
+    handler: src/lambda/http/getTodosByTag.handler
+    events:
+      - http:
+          method: get
+          path: tag/{tagName}
+          cors: true
+          authorizer: Auth
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+        Resource: arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.TODOS_TABLE}
+        
   # TODO: Configure this function
   CreateTodo:
     handler: src/lambda/http/createTodo.handler
@@ -150,19 +165,33 @@ resources:
           - AttributeName: createdAt
             AttributeType: S
         KeySchema:
-          - AttributeName: todoId
-            KeyType: HASH
           - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: todoId
             KeyType: RANGE
-        GlobalSecondaryIndexes:
-          - IndexName: ${self:provider.environment.TODOS_BY_USER_INDEX}
-            KeySchema:
-              - AttributeName: userId
-                KeyType: HASH
-              - AttributeName: createdAt
-                KeyType: RANGE
-            Projection:
-              ProjectionType: ALL
+        # GlobalSecondaryIndexes:
+        #   - IndexName: ${self:provider.environment.TODOS_BY_TODO_ID_INDEX}
+        #     KeySchema:
+        #       - AttributeName: tag
+        #         KeyType: HASH
+        #       - AttributeName: createdAt
+        #         KeyType: RANGE
+        #     Projection:
+        #       ProjectionType: ALL
+        # KeySchema:
+        #   - AttributeName: todoId
+        #     KeyType: HASH
+        #   - AttributeName: userId
+        #     KeyType: RANGE
+        # GlobalSecondaryIndexes:
+        #   - IndexName: ${self:provider.environment.TODOS_BY_USER_INDEX}
+        #     KeySchema:
+        #       - AttributeName: userId
+        #         KeyType: HASH
+        #       - AttributeName: createdAt
+        #         KeyType: RANGE
+        #     Projection:
+        #       ProjectionType: ALL
         BillingMode: PAY_PER_REQUEST
         TableName: ${self:provider.environment.TODOS_TABLE}
     AttachmentsBucket:

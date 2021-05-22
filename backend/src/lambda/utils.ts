@@ -14,3 +14,8 @@ export function getUserId(event: APIGatewayProxyEvent): string {
 
   return parseUserId(jwtToken)
 }
+
+export function getTag(event: APIGatewayProxyEvent): string {
+  const body=JSON.parse(event.body)
+  return body.tag
+}

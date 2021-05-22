@@ -14,18 +14,33 @@ export class TodoAccess {
   constructor(
     private readonly docClient: DocumentClient = new XAWS.DynamoDB.DocumentClient(),
     private readonly attachmentsBucket = process.env.TODO_S3_BUCKET,
-    private readonly todoTable = process.env.TODOS_TABLE,
-    private readonly userindex = process.env.TODOS_BY_USER_INDEX) {
-  }
-
+    private readonly todoTable = process.env.TODOS_TABLE) {
+    }
+    
+    // private readonly tagIndex = process.env.TODOS_BY_USER_INDEX
   async getAllTodosFromDynamodb(userId :String): Promise<TodoItem[]> {
 
     const todos = await this.docClient.query({
         TableName: this.todoTable,
-        IndexName: this.userindex,
+        // IndexName: this.userindex,
         KeyConditionExpression : 'userId = :id',
         ExpressionAttributeValues:{
           ':id':userId
+        }
+      }).promise()
+
+    const items = todos.Items
+    return items as TodoItem[]
+  }
+
+  async getAllTodosByTagFromDynamodb(tag:String, userId :String): Promise<TodoItem[]> {
+
+    const todos = await this.docClient.query({
+        TableName: this.todoTable,
+        FilterExpression : 'tag = :tag , userId=:userId',
+        ExpressionAttributeValues:{
+          ':tag':tag,
+          ':userId':userId
         }
       }).promise()
 
@@ -42,12 +57,13 @@ export class TodoAccess {
     return todoItem
   }
 
-  async updateAttachmentUrl(todoId: string) {
+  async updateAttachmentUrl(userId:String,todoId: string) {
     logger.info(`Updating attachment URL for todo ${todoId}`)
 
     await this.docClient.update({
         TableName: this.todoTable,
         Key: {
+            userId,
             todoId
         },
         UpdateExpression: 'set attachmentUrl = :attachmentUrl',
@@ -60,7 +76,7 @@ export class TodoAccess {
     return
   }
 
-  async updateTodoInDynamodb( todoId :String, todoItem: UpdateTodoRequest) {
+  async updateTodoInDynamodb( userId:String,todoId :String, todoItem: UpdateTodoRequest) {
   
     logger.info('Updating the todo with ID: ', todoId)
 
@@ -68,6 +84,7 @@ export class TodoAccess {
     await this.docClient.update({
         TableName: this.todoTable,
         Key: {
+            userId,
             todoId
         },
         UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
@@ -87,12 +104,13 @@ export class TodoAccess {
   }
 
 
-    async deleteTodoFromDynamodb( todoId :String) {
+    async deleteTodoFromDynamodb( userId:String,todoId :String) {
         await this.docClient.delete({
             TableName: this.todoTable,
             Key:{
-            "todoId":todoId
-         }
+              userId,
+              todoId
+            }
         }).promise()
       return 
     }

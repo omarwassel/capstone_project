@@ -9,6 +9,7 @@ import { APIGatewayProxyEvent,APIGatewayProxyResult } from 'aws-lambda'
 
 import { updateTodo } from '../../businessLogic/todoCurdFunctions'
 import { UpdateTodoRequest } from '../../requests/UpdateTodoRequest'
+import { getUserId } from'../utils'
 
 import {createLogger} from '../../utils/logger'
 const loggers= createLogger('update todo logger ..')
@@ -23,7 +24,8 @@ export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGat
   const updatedTodo: UpdateTodoRequest = JSON.parse(event.body)
 
   // TODO: Update a TODO item with the provided id using values in the "updatedTodo" object
-  await updateTodo(updatedTodo,todoId)
+  const userId=getUserId(event)
+  await updateTodo(updatedTodo,userId,todoId)
 
   return {
     statusCode:200,

@@ -1,32 +1,33 @@
 import middy from '@middy/core'
 import cors from '@middy/cors'
-// import { cors } from 'middy/middlewares'
 import warmup from '@middy/warmup'
 
-import 'source-map-support/register'
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda'
-import{deleteTodo} from '../../businessLogic/todoCurdFunctions'
-import { getUserId } from'../utils'
+import 'source-map-support/register'
+
+import {getAllTodosByTag} from '../../businessLogic/todoCurdFunctions'
+import { getUserId,getTag } from'../utils'
 
 import {createLogger} from '../../utils/logger'
-const loggers= createLogger('delete todo logger ..')
+const loggers= createLogger('get todos logger ..')
 
 export const handler = middy(async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  const todoId = event.pathParameters.todoId
-
-  loggers.info('Proccessing delete event: ',event)
-  // TODO: Remove a TODO item by id
+  
+  loggers.info('Proccessing get by tag event:  ',event)
+  // TODO: Get all TODO items for a current user
+  
   const userId=getUserId(event)
-  await deleteTodo(userId,todoId)
-    
+  const tag= getTag(event)
+  const items=await getAllTodosByTag(tag,userId);
+  
   return {
     statusCode:200,
     body:JSON.stringify({
-      
+      items
     })
   }
-
 })
+
 
 handler.use([
   cors({
